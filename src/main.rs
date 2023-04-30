@@ -17,6 +17,7 @@ enum TokenKind {
     BooleanOperator,
     ComparisonOperator,
     LogicalOperator,
+    Comment,
     End,
 }
 
@@ -91,6 +92,9 @@ impl Lexer {
         if kind == TokenKind::Identifier && !(value.starts_with('\'') && value.ends_with('\'')) {
             value = value.to_ascii_lowercase();
         }
+        if kind == TokenKind::Identifier && value.starts_with("--") {
+            kind = TokenKind::Comment;
+        }
 
         self.statements[self.statements_counter].push(Token::new(value, kind));
         self.stack.clear();
@@ -125,7 +129,7 @@ impl Lexer {
                 continue;
             }
             if self.commenting {
-                if c == '\n' {
+                if matches!(c, '\n' | '\r') {
                     self.commenting = false;
                     self.add_token();
                     if self.statements.len() != self.statements_counter {
@@ -152,7 +156,7 @@ impl Lexer {
                     if matches!(pair.1, '(' | ')' | ';' | ',') {
                         self.add_token();
                         self.stack.push(c);
-                    } else if matches!(pair.1, '\'' | '%') {
+                    } else if matches!(pair.1, '\'' | '%' | '\\') {
                         if self.stringing {
                             self.stack.push(c);
                         }
@@ -192,7 +196,7 @@ impl Lexer {
                 self.stringing = !(pair != ('\'', '\'') && (pair.1 == '\'' && !self.stringing));
                 if pair.1.is_ascii_alphabetic() {
                     // punctuation -> alphabetic
-                    if matches!(pair.0, '_' | '\'' | '%') {
+                    if matches!(pair.0, '_' | '\'' | '%' | '\\') {
                         // println!("\t{}", c);
                         self.stack.push(c);
                     } else {
@@ -220,7 +224,9 @@ impl Lexer {
                     {
                         self.add_token();
                         self.stack.push(c);
-                    } else if pair == ('\'', '%')
+                    } else if pair == ('\'', '\\')
+                        || pair == ('\\', '\'')
+                        || pair == ('\'', '%')
                         || pair == ('%', '\'')
                         || pair == ('>', '=')
                         || pair == ('<', '=')
@@ -278,7 +284,7 @@ impl Lexer {
             let mut line: String = "".to_string();
             for tkn in stmt.iter() {
                 if self.col == 0 {
-                    line += format!("{}", &tkn.value).as_str();
+                    line += format!("{}\t--{:?}", &tkn.value, &tkn.kind).as_str();
                 } else {
                     line += format!("\n\t{}\t--{:?}", &tkn.value, &tkn.kind).as_str();
                 }

@@ -1,5 +1,5 @@
--- create a table called users
-CREATE
+-- create a table called users	--Comment
+	--IdentifierCREATE	--Keyword
 	TABLE	--Keyword
 	users	--Identifier
 	(	--Identifier
@@ -35,8 +35,8 @@ CREATE
 	)	--Identifier
 	)	--Identifier
 	;	--End
--- insert some people into the table
-INSERT
+	--Identifier-- insert some people into the table	--Comment
+	--IdentifierINSERT	--Keyword
 	INTO	--Keyword
 	users	--Identifier
 	(	--Identifier
@@ -52,7 +52,7 @@ INSERT
 	)	--Identifier
 	,	--Identifier
 	(	--Identifier
-	'Zach'	--Identifier
+	'Zachary'	--Identifier
 	,	--Identifier
 	'L'	--Identifier
 	)	--Identifier
@@ -64,13 +64,13 @@ INSERT
 	)	--Identifier
 	,	--Identifier
 	(	--Identifier
-	'Remington'	--Identifier
+	'\tRemington'	--Identifier
 	,	--Identifier
 	'D'	--Identifier
 	)	--Identifier
 	;	--End
--- select users based on criteria
-SELECT
+	--Identifier-- select users based on criteria	--Comment
+	--IdentifierSELECT	--Keyword
 	name	--Identifier
 	,	--Identifier
 	_active	--Identifier
@@ -88,9 +88,9 @@ SELECT
 	>=	--ComparisonOperator
 	10	--Identifier
 	;	--End
-SELECT
+	--IdentifierSELECT	--Keyword
 	*	--ArithmeticOperator
 	FROM	--Keyword
 	users	--Identifier
 	;	--End
--- finally, all users
+	--Identifier-- finally, all users	--Comment
