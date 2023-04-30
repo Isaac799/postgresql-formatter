@@ -1,14 +1,31 @@
 use std::env;
 use std::fs;
+mod data;
 
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 struct Token {
     value: String,
+    kind: TokenKind,
+}
+
+#[derive(Debug, PartialEq)]
+enum TokenKind {
+    Identifier,
+    Keyword,
+    DataType,
+    ArithmeticOperator,
+    BooleanOperator,
+    ComparisonOperator,
+    LogicalOperator,
+    End,
 }
 
 impl Token {
-    fn new(value: String) -> Self {
-        Token { value: value }
+    fn new(value: String, kind: TokenKind) -> Self {
+        Token {
+            value: value,
+            kind: kind,
+        }
     }
 }
 
@@ -20,6 +37,7 @@ struct Lexer {
     stack: Vec<char>,
     statements: Vec<Vec<Token>>,
     statements_counter: usize,
+    commenting: bool,
     row: usize,
     col: usize,
     pos: usize,
@@ -35,6 +53,7 @@ impl Lexer {
             state: 0,
             last: ' ',
             stack: vec![],
+            commenting: false,
             row: 0,
             col: 0,
             pos: 0,
@@ -46,16 +65,41 @@ impl Lexer {
     }
 
     fn add_token(&mut self) {
-        self.statements[self.statements_counter].push(Token::new(self.stack.iter().collect()));
+        let mut value: String = self.stack.iter().collect();
+        let value_upper: String = value.to_ascii_uppercase();
+        let mut kind: TokenKind = TokenKind::Identifier;
+
+        if data::KEYWORDS.contains(&value_upper.as_str()) {
+            kind = TokenKind::Keyword;
+            value = value_upper;
+        } else if data::DATA_TYPES.contains(&value_upper.as_str()) {
+            kind = TokenKind::DataType;
+            value = value_upper;
+        } else {
+            match value.to_ascii_uppercase().as_str() {
+                "+" | "-" | "*" | "/" | "%" => kind = TokenKind::ArithmeticOperator,
+                "AND" | "OR" | "NOT" => kind = TokenKind::BooleanOperator,
+                "<" | "<=" | "=" | ">=" | ">" => kind = TokenKind::ComparisonOperator,
+                "THEN" | "ELSE" => kind = TokenKind::LogicalOperator,
+                ";" => kind = TokenKind::End,
+                _ => {}
+            }
+        }
+
+        if kind == TokenKind::Identifier && !(value.starts_with('\'') && value.ends_with('\'')) {
+            value = value.to_ascii_lowercase();
+        }
+
+        self.statements[self.statements_counter].push(Token::new(value, kind));
         self.stack.clear();
     }
 
     fn run(&mut self) {
         println!("Running...");
         self.state = 1;
-        self.input = self.input.to_ascii_uppercase();
-        let a = self.input.clone();
-        let all = a.chars();
+        // self.input = self.input.to_ascii_uppercase();
+        let a: String = self.input.clone();
+        let all: std::str::Chars = a.chars();
 
         for c in all {
             if self.pos == 0 {
@@ -65,9 +109,11 @@ impl Lexer {
                 self.pos += 1;
                 continue;
             }
-            if c == ';' {
+            if c == ';' && !self.commenting {
+                self.add_token();
                 self.stack.push(c);
                 self.add_token();
+
                 if self.statements.len() != self.statements_counter {
                     self.statements.push(vec![])
                 }
@@ -76,7 +122,22 @@ impl Lexer {
                 self.pos += 1;
                 continue;
             }
-            let pair = (self.last, c);
+            if self.commenting {
+                if c == '\n' {
+                    self.commenting = false;
+                    self.add_token();
+                    if self.statements.len() != self.statements_counter {
+                        self.statements.push(vec![])
+                    }
+                    self.statements_counter += 1;
+                } else {
+                    self.last = c;
+                    self.pos += 1;
+                    self.stack.push(c);
+                    continue;
+                }
+            }
+            let pair: (char, char) = (self.last, c);
             if pair.0.is_ascii_alphabetic() {
                 if pair.1.is_ascii_alphabetic() {
                     // alphabetic -> alphabetic
@@ -89,12 +150,12 @@ impl Lexer {
                     if matches!(pair.1, '(' | ')' | ';' | ',') {
                         self.add_token();
                         self.stack.push(c);
-                    } else if matches!(pair.1, '\'') {
+                    } else if matches!(pair.1, '\'' | '%') {
                         self.stack.push(c);
                     } else if matches!(pair.1, '_') {
                         self.stack.push(c);
                     } else {
-                        println!("Not allowed: {}\t{}", pair.0, pair.1);
+                        println!("\tNot allowed: {}\t{}", pair.0, pair.1);
                     }
                 } else if pair.1.is_ascii_whitespace() {
                     // alphabetic -> whitespace
@@ -105,7 +166,7 @@ impl Lexer {
             } else if pair.0.is_ascii_digit() {
                 if pair.1.is_ascii_alphabetic() {
                     // digit -> alphabetic
-                    println!("Not allowed: {}\t{}", pair.0, pair.1);
+                    println!("\tNot allowed: {}\t{}", pair.0, pair.1);
                 } else if pair.1.is_ascii_digit() {
                     // digit -> digit
                     self.stack.push(c);
@@ -115,7 +176,7 @@ impl Lexer {
                         self.add_token();
                         self.stack.push(c);
                     } else {
-                        println!("Not allowed: {}\t{}", pair.0, pair.1);
+                        println!("\tNot allowed: {}\t{}", pair.0, pair.1);
                     }
                 } else if pair.1.is_ascii_whitespace() {
                     // digit -> whitespace
@@ -126,7 +187,24 @@ impl Lexer {
             } else if pair.0.is_ascii_punctuation() {
                 if pair.1.is_ascii_alphabetic() {
                     // punctuation -> alphabetic
-                    if matches!(pair.0, '_' | '\'') {
+                    if matches!(pair.0, '_' | '\'' | '%') {
+                        // match self.stack.first() {
+                        //     Some(o) => {
+                        //         println!("{}", o);
+                        //         if o == &'\'' || (o.is_alphabetic()) {
+                        //             self.stack.push(c);
+                        //         } else {
+                        //             println!("\tNot allowed: {}\t{}", pair.0, pair.1);
+                        //         }
+                        //     }
+                        //     None => {
+                        //         if pair.0 == '_' {
+                        //             self.stack.push(c);
+                        //         } else {
+                        //             println!("\tNot allowed: {}\t{}", pair.0, pair.1);
+                        //         }
+                        //     }
+                        // }
                         self.stack.push(c);
                     } else {
                         self.add_token();
@@ -138,7 +216,7 @@ impl Lexer {
                         self.add_token();
                         self.stack.push(c);
                     } else {
-                        println!("Not allowed: {}\t{}", pair.0, pair.1);
+                        println!("\tNot allowed: {}\t{}", pair.0, pair.1);
                     }
                 } else if pair.1.is_ascii_punctuation() {
                     // punctuation -> punctuation
@@ -150,12 +228,24 @@ impl Lexer {
                         || pair == ('\'', '(')
                         || pair == ('\'', ')')
                         || pair == ('\'', ',')
-                        || pair == ('\'', '\'')
                     {
                         self.add_token();
                         self.stack.push(c);
+                    } else if pair == ('\'', '%') || pair == ('%', '\'') {
+                        self.stack.push(c);
+                    } else if pair == ('\'', '\'') {
+                        if self.stack.len() > 1 {
+                            self.add_token();
+                            self.stack.push(c);
+                        } else {
+                            self.add_token();
+                            self.stack.push(c);
+                        }
+                    } else if pair == ('-', '-') {
+                        self.commenting = true;
+                        self.stack.push(c);
                     } else {
-                        println!("Not allowed: {}\t{}", pair.0, pair.1);
+                        println!("\tNot allowed: {}\t{}", pair.0, pair.1);
                     }
                 } else if pair.1.is_ascii_whitespace() {
                     // punctuation -> whitespace
@@ -188,29 +278,17 @@ impl Lexer {
             self.add_token();
         }
 
-        let mut answer = "".to_string();
+        let mut answer: String = "".to_string();
+
+        // println!("Processing Statements: {:?}", &self.statements);
 
         for stmt in &self.statements {
-            let mut line = "".to_string();
-            let mut longest = 0;
+            let mut line: String = "".to_string();
             for tkn in stmt.iter() {
                 if self.col == 0 {
                     line += format!("{}", &tkn.value).as_str();
-                }
-                //  else if tkn.value == "(" {
-                //     line += format!("\n\t{}", &tkn.value).as_str();
-                //     col = 0;
-                // }
-                else if self.col > longest {
-                    line += format!("\n\t{}", &tkn.value).as_str();
-                    self.col = 0;
-                }
-                // else if col > 40 {
-                //     statement += format!("\n\t{}", &tkn.value).as_str();
-                //     col = 0;
-                // }
-                else {
-                    line += format!(" {}", &tkn.value).as_str();
+                } else {
+                    line += format!("\n {}\t\t\t--{:?}", &tkn.value, &tkn.kind).as_str();
                 }
                 self.col += tkn.value.len();
             }

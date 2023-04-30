@@ -1,74 +1,93 @@
+-- create a table called users
 CREATE
-	TABLE
-	USERS
-	(
-	ID
-	SERIAL
-	PRIMARY
-	KEY
-	,
-	NAME
-	VARCHAR
-	(
-	32
-	)
-	NOT
-	NULL
-	,
-	ACTIVE
-	BOOLEAN
-	DEFAULT
-	TRUE
-	NOT
-	NULL
-	,
-	LAST_INITIAL
-	CHAR
-	(
-	1
-	)
-	,
-	UNIQUE
-	(
-	NAME
-	)
-	);
+ TABLE			--Keyword
+ users			--Identifier
+ (			--Identifier
+ id			--Identifier
+ SERIAL			--DataType
+ PRIMARY			--Keyword
+ KEY			--Keyword
+ ,			--Identifier
+ name			--Identifier
+ varchar			--Identifier
+ (			--Identifier
+ 32			--Identifier
+ )			--Identifier
+ NOT			--Keyword
+ NULL			--Keyword
+ ,			--Identifier
+ _active			--Identifier
+ BOOLEAN			--DataType
+ DEFAULT			--Keyword
+ TRUE			--Keyword
+ NOT			--Keyword
+ NULL			--Keyword
+ ,			--Identifier
+ last_initial			--Identifier
+ char			--Identifier
+ (			--Identifier
+ 1			--Identifier
+ )			--Identifier
+ ,			--Identifier
+ UNIQUE			--Keyword
+ (			--Identifier
+ name			--Identifier
+ )			--Identifier
+ )			--Identifier
+ ;			--End
+-- insert some people into the table
 INSERT
-	INTO
-	USERS
-	(
-	NAME
-	,
-	LAST_INITIAL
-	)
-	VALUES
-	(
-	'ISAAC'
-	,
-	'L'
-	)
-	,
-	(
-	'ZACH'
-	,
-	'L'
-	)
-	,
-	(
-	'JORDAN'
-	,
-	'Y'
-	)
-	,
-	(
-	'REMINGTON'
-	,
-	'D'
-	);
+ INTO			--Keyword
+ users			--Identifier
+ (			--Identifier
+ name			--Identifier
+ ,			--Identifier
+ last_initial			--Identifier
+ )			--Identifier
+ VALUES			--Keyword
+ (			--Identifier
+ 'Isaac'			--Identifier
+ ,			--Identifier
+ 'L'			--Identifier
+ )			--Identifier
+ ,			--Identifier
+ (			--Identifier
+ 'Zach'			--Identifier
+ ,			--Identifier
+ 'L'			--Identifier
+ )			--Identifier
+ ,			--Identifier
+ (			--Identifier
+ 'Jordan'			--Identifier
+ ,			--Identifier
+ 'Y'			--Identifier
+ )			--Identifier
+ ,			--Identifier
+ (			--Identifier
+ 'Remington'			--Identifier
+ ,			--Identifier
+ 'D'			--Identifier
+ )			--Identifier
+ ;			--End
+-- select users based on criteria
 SELECT
-	NAME
-	,
-	ACTIVE
-	FROM
-	USERS;
-
+ name			--Identifier
+ ,			--Identifier
+ _active			--Identifier
+ FROM			--Keyword
+ users			--Identifier
+ WHERE			--Keyword
+ name			--Identifier
+ LIKE			--Keyword
+ '%a%'			--Identifier
+ AND			--Keyword
+ last_initial			--Identifier
+ =			--ComparisonOperator
+ 'L'			--Identifier
+ ;			--End
+SELECT
+ *			--ArithmeticOperator
+ FROM			--Keyword
+ users			--Identifier
+ ;			--End
+-- finally, all users
