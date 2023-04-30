@@ -8,10 +8,10 @@ create table users (
 );
 
 -- Insert some people into the table
-insert into users(name, last_initial) values ('Isaac', 'L'), ('Zach', 'L'), ('Jordan', 'Y'), ('Remington', 'D');
+insert into users(name, last_initial) values ('Isaac''s', 'L'), ('Zach', 'L'), ('Jordan', 'Y'), ('Remington', 'D');
 
 -- Select users based on criteria
-SELECt name, _active from users where name like '%a%' and last_initial = 'L';
+SELECt name, _active from users where name like '%a%' and last_initial = 'L'or age >= 10;
 
 
 select * from users; -- Finally, all users

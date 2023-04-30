@@ -38,6 +38,7 @@ struct Lexer {
     statements: Vec<Vec<Token>>,
     statements_counter: usize,
     commenting: bool,
+    stringing: bool,
     row: usize,
     col: usize,
     pos: usize,
@@ -54,6 +55,7 @@ impl Lexer {
             last: ' ',
             stack: vec![],
             commenting: false,
+            stringing: false,
             row: 0,
             col: 0,
             pos: 0,
@@ -151,7 +153,9 @@ impl Lexer {
                         self.add_token();
                         self.stack.push(c);
                     } else if matches!(pair.1, '\'' | '%') {
-                        self.stack.push(c);
+                        if self.stringing {
+                            self.stack.push(c);
+                        }
                     } else if matches!(pair.1, '_') {
                         self.stack.push(c);
                     } else {
@@ -185,26 +189,11 @@ impl Lexer {
                     println!("Unknown: {}, {}", pair.0, pair.1);
                 }
             } else if pair.0.is_ascii_punctuation() {
+                self.stringing = !(pair != ('\'', '\'') && (pair.1 == '\'' && !self.stringing));
                 if pair.1.is_ascii_alphabetic() {
                     // punctuation -> alphabetic
                     if matches!(pair.0, '_' | '\'' | '%') {
-                        // match self.stack.first() {
-                        //     Some(o) => {
-                        //         println!("{}", o);
-                        //         if o == &'\'' || (o.is_alphabetic()) {
-                        //             self.stack.push(c);
-                        //         } else {
-                        //             println!("\tNot allowed: {}\t{}", pair.0, pair.1);
-                        //         }
-                        //     }
-                        //     None => {
-                        //         if pair.0 == '_' {
-                        //             self.stack.push(c);
-                        //         } else {
-                        //             println!("\tNot allowed: {}\t{}", pair.0, pair.1);
-                        //         }
-                        //     }
-                        // }
+                        // println!("\t{}", c);
                         self.stack.push(c);
                     } else {
                         self.add_token();
@@ -231,11 +220,14 @@ impl Lexer {
                     {
                         self.add_token();
                         self.stack.push(c);
-                    } else if pair == ('\'', '%') || pair == ('%', '\'') {
+                    } else if pair == ('\'', '%')
+                        || pair == ('%', '\'')
+                        || pair == ('>', '=')
+                        || pair == ('<', '=')
+                    {
                         self.stack.push(c);
                     } else if pair == ('\'', '\'') {
-                        if self.stack.len() > 1 {
-                            self.add_token();
+                        if self.stringing {
                             self.stack.push(c);
                         } else {
                             self.add_token();
@@ -288,7 +280,7 @@ impl Lexer {
                 if self.col == 0 {
                     line += format!("{}", &tkn.value).as_str();
                 } else {
-                    line += format!("\n {}\t\t\t--{:?}", &tkn.value, &tkn.kind).as_str();
+                    line += format!("\n\t{}\t--{:?}", &tkn.value, &tkn.kind).as_str();
                 }
                 self.col += tkn.value.len();
             }
