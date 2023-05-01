@@ -173,3 +173,19 @@ pub const DATA_TYPES: [&str; 43] = [
     "UUID",                     //	 	universally unique identifier
     "XML",                      //	 	XML data
 ];
+
+pub const OPERATORS_COMPARISON: [&str; 13] = [
+    "IS",
+    "ISNULL",
+    "NOTNULL",
+    "IS TRUE",
+    "IS FALSE",
+    "IS NULL",
+    "IS DISTINCT FROM",
+    "<",
+    "<=",
+    "=",
+    ">=",
+    ">",
+    "<>",
+];

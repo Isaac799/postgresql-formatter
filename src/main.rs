@@ -18,6 +18,12 @@ enum TokenKind {
     ComparisonOperator,
     LogicalOperator,
     Comment,
+    TypeCast,
+    Matching,
+    Delimiter,
+    ArrayElementSelector,
+    TableColumnSeparator,
+    Separator,
     End,
 }
 
@@ -38,12 +44,12 @@ struct Lexer {
     stack: Vec<char>,
     statements: Vec<Vec<Token>>,
     statements_counter: usize,
-    commenting: bool,
+    commenting_line: bool,
+    commenting_block: bool,
     stringing: bool,
     row: usize,
     col: usize,
     pos: usize,
-    // tokens: Vec<Token>,
     output: String,
 }
 
@@ -55,19 +61,22 @@ impl Lexer {
             state: 0,
             last: ' ',
             stack: vec![],
-            commenting: false,
+            commenting_line: false,
+            commenting_block: false,
             stringing: false,
             row: 0,
             col: 0,
             pos: 0,
             statements: vec![],
             statements_counter: 0,
-            // tokens: vec![],
             output: "".to_string(),
         }
     }
 
     fn add_token(&mut self) {
+        if self.stack.len() == 0 {
+            return;
+        }
         let mut value: String = self.stack.iter().collect();
         let value_upper: String = value.to_ascii_uppercase();
         let mut kind: TokenKind = TokenKind::Identifier;
@@ -78,12 +87,20 @@ impl Lexer {
         } else if data::DATA_TYPES.contains(&value_upper.as_str()) {
             kind = TokenKind::DataType;
             value = value_upper;
+        } else if data::OPERATORS_COMPARISON.contains(&value_upper.as_str()) {
+            kind = TokenKind::ComparisonOperator;
+            value = value_upper;
         } else {
             match value.to_ascii_uppercase().as_str() {
+                "BETWEEN" | "IN" | "LIKE" | "ILIKE" | "SIMILAR" => kind = TokenKind::Matching,
                 "+" | "-" | "*" | "/" | "%" => kind = TokenKind::ArithmeticOperator,
                 "AND" | "OR" | "NOT" => kind = TokenKind::BooleanOperator,
-                "<" | "<=" | "=" | ">=" | ">" => kind = TokenKind::ComparisonOperator,
                 "THEN" | "ELSE" => kind = TokenKind::LogicalOperator,
+                "[" | "]" => kind = TokenKind::ArrayElementSelector,
+                "(" | ")" => kind = TokenKind::Separator,
+                "::" => kind = TokenKind::TypeCast,
+                "," => kind = TokenKind::Delimiter,
+                "." => kind = TokenKind::TableColumnSeparator,
                 ";" => kind = TokenKind::End,
                 _ => {}
             }
@@ -92,7 +109,9 @@ impl Lexer {
         if kind == TokenKind::Identifier && !(value.starts_with('\'') && value.ends_with('\'')) {
             value = value.to_ascii_lowercase();
         }
-        if kind == TokenKind::Identifier && value.starts_with("--") {
+        if kind == TokenKind::Identifier
+            && (value.starts_with("--") || (value.starts_with("/*") && value.ends_with("*/")))
+        {
             kind = TokenKind::Comment;
         }
 
@@ -108,6 +127,7 @@ impl Lexer {
         let all: std::str::Chars = a.chars();
 
         for c in all {
+            let pair: (char, char) = (self.last, c);
             if self.pos == 0 {
                 self.stack.push(c);
                 self.statements.push(vec![]);
@@ -115,7 +135,7 @@ impl Lexer {
                 self.pos += 1;
                 continue;
             }
-            if c == ';' && !self.commenting {
+            if c == ';' && !self.commenting_line {
                 self.add_token();
                 self.stack.push(c);
                 self.add_token();
@@ -127,10 +147,9 @@ impl Lexer {
                 self.last = c;
                 self.pos += 1;
                 continue;
-            }
-            if self.commenting {
+            } else if self.commenting_line {
                 if matches!(c, '\n' | '\r') {
-                    self.commenting = false;
+                    self.commenting_line = false;
                     self.add_token();
                     if self.statements.len() != self.statements_counter {
                         self.statements.push(vec![])
@@ -142,9 +161,22 @@ impl Lexer {
                     self.stack.push(c);
                     continue;
                 }
-            }
-            let pair: (char, char) = (self.last, c);
-            if pair.0.is_ascii_alphabetic() {
+            } else if self.commenting_block {
+                if matches!(pair, ('*', '/')) {
+                    self.commenting_block = false;
+                    self.stack.push(c);
+                    self.add_token();
+                    if self.statements.len() != self.statements_counter {
+                        self.statements.push(vec![])
+                    }
+                    self.statements_counter += 1;
+                } else {
+                    self.last = c;
+                    self.pos += 1;
+                    self.stack.push(c);
+                    continue;
+                }
+            } else if pair.0.is_ascii_alphabetic() {
                 if pair.1.is_ascii_alphabetic() {
                     // alphabetic -> alphabetic
                     self.stack.push(c);
@@ -240,7 +272,10 @@ impl Lexer {
                             self.stack.push(c);
                         }
                     } else if pair == ('-', '-') {
-                        self.commenting = true;
+                        self.commenting_line = true;
+                        self.stack.push(c);
+                    } else if pair == ('/', '*') {
+                        self.commenting_block = true;
                         self.stack.push(c);
                     } else {
                         println!("\tNot allowed: {}\t{}", pair.0, pair.1);
@@ -278,7 +313,7 @@ impl Lexer {
 
         let mut answer: String = "".to_string();
 
-        // println!("Processing Statements: {:?}", &self.statements);
+        println!("Processing Statements: {:?}", &self.statements);
 
         for stmt in &self.statements {
             let mut line: String = "".to_string();

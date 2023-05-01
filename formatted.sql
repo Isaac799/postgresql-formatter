@@ -1,78 +1,78 @@
 -- create a table called users	--Comment
-	--IdentifierCREATE	--Keyword
+CREATE	--Keyword
 	TABLE	--Keyword
 	users	--Identifier
-	(	--Identifier
+	(	--Separator
 	id	--Identifier
 	SERIAL	--DataType
 	PRIMARY	--Keyword
 	KEY	--Keyword
-	,	--Identifier
+	,	--Delimiter
 	name	--Identifier
 	varchar	--Identifier
-	(	--Identifier
+	(	--Separator
 	32	--Identifier
-	)	--Identifier
+	)	--Separator
 	NOT	--Keyword
 	NULL	--Keyword
-	,	--Identifier
+	,	--Delimiter
 	_active	--Identifier
 	BOOLEAN	--DataType
 	DEFAULT	--Keyword
 	TRUE	--Keyword
 	NOT	--Keyword
 	NULL	--Keyword
-	,	--Identifier
+	,	--Delimiter
 	last_initial	--Identifier
 	char	--Identifier
-	(	--Identifier
+	(	--Separator
 	1	--Identifier
-	)	--Identifier
-	,	--Identifier
+	)	--Separator
+	,	--Delimiter
 	UNIQUE	--Keyword
-	(	--Identifier
+	(	--Separator
 	name	--Identifier
-	)	--Identifier
-	)	--Identifier
+	)	--Separator
+	)	--Separator
 	;	--End
-	--Identifier-- insert some people into the table	--Comment
-	--IdentifierINSERT	--Keyword
+-- insert some people into the table	--Comment
+INSERT	--Keyword
 	INTO	--Keyword
 	users	--Identifier
-	(	--Identifier
+	(	--Separator
 	name	--Identifier
-	,	--Identifier
+	,	--Delimiter
 	last_initial	--Identifier
-	)	--Identifier
+	)	--Separator
 	VALUES	--Keyword
-	(	--Identifier
+	(	--Separator
 	'Isaac''s'	--Identifier
-	,	--Identifier
+	,	--Delimiter
 	'L'	--Identifier
-	)	--Identifier
-	,	--Identifier
-	(	--Identifier
+	)	--Separator
+	,	--Delimiter
+	(	--Separator
 	'Zachary'	--Identifier
-	,	--Identifier
+	,	--Delimiter
 	'L'	--Identifier
-	)	--Identifier
-	,	--Identifier
-	(	--Identifier
+	)	--Separator
+	,	--Delimiter
+	(	--Separator
 	'Jordan'	--Identifier
-	,	--Identifier
+	,	--Delimiter
 	'Y'	--Identifier
-	)	--Identifier
-	,	--Identifier
-	(	--Identifier
+	)	--Separator
+	,	--Delimiter
+	(	--Separator
 	'\tRemington'	--Identifier
-	,	--Identifier
+	,	--Delimiter
 	'D'	--Identifier
-	)	--Identifier
+	)	--Separator
 	;	--End
-	--Identifier-- select users based on criteria	--Comment
-	--IdentifierSELECT	--Keyword
+-- select users based on criteria	--Comment
+SELECT	--Keyword
 	name	--Identifier
-	,	--Identifier
+	,	--Delimiter
 	_active	--Identifier
 	FROM	--Keyword
 	users	--Identifier
@@ -88,9 +88,12 @@
 	>=	--ComparisonOperator
 	10	--Identifier
 	;	--End
-	--IdentifierSELECT	--Keyword
+/*
+ that is all!
+*/	--Comment
+SELECT	--Keyword
 	*	--ArithmeticOperator
 	FROM	--Keyword
 	users	--Identifier
 	;	--End
-	--Identifier-- finally, all users	--Comment
+-- finally, all users	--Comment
